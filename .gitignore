@@ -1,3 +1,5 @@
 /node_modules
 development.db
 .env
+coverage
+.nyc_output
