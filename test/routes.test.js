@@ -95,6 +95,18 @@ describe('/tasks', () => {
 					assert.deepStrictEqual(res.statusCode, 400);
 					assert.ok(res.text.includes('Submission was invalid.'))
 				});
+			await supertest(app)
+				.get('/tasks/createTask?text=')
+				.expect(res => {
+					assert.deepStrictEqual(res.statusCode, 400);
+					assert.ok(res.text.includes('Submission was invalid.'))
+				});
+			await supertest(app)
+				.get('/tasks/createTask')
+				.expect(res => {
+					assert.deepStrictEqual(res.statusCode, 400);
+					assert.ok(res.text.includes('Submission was invalid.'))
+				});
 		});
 	});
 

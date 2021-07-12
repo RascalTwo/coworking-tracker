@@ -92,7 +92,7 @@ module.exports = {
     res.status(201).json({ message: 'Your task has been removed' });
   },
   getUnfinishedTask: async (req, res, next) => {
-    const task = await Task.findOne({
+    const task = req.query.user && await Task.findOne({
       where: {
         user: req.query.user,
         finished: { [Op.or]: [false, null] },
