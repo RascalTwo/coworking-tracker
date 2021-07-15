@@ -102,8 +102,9 @@ module.exports = {
     next();
   },
   resetAllTasks: async (req, res) => {
-    if (req.query.user !== 'theDabolical')
-      res.json({ message: 'Only the stream owner can delete all tasks.' });
+    if (req.query.user !== 'theDabolical') {
+      return res.json({ message: 'Only the stream owner can delete all tasks.' });
+    }
     await Task.sync({ force: true });
 
     const tasks = await Task.findAll();
