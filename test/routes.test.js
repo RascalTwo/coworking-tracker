@@ -155,6 +155,26 @@ describe('/tasks', () => {
 				.get('/tasks/deleteTask?user=thedabolical&id=' + task.id)
 				.expect(201, { message: 'Your task has been removed' })
 		});
+
+		it('deletes last unfinished task when not provided ID', async () => {
+			// Create and finish task
+			await supertest(app)
+				.get('/tasks/createTask?user=first&task=finishing-text')
+			await supertest(app)
+				.get('/tasks/finishTask?user=username')
+
+			// Create and delete task without ID
+			await supertest(app)
+				.get('/tasks/createTask?user=first&task=delete-without-id')
+			await supertest(app)
+				.get('/tasks/deleteTask?user=first')
+				.expect(201, { message: 'Your task has been removed' })
+
+			// Try and delete already finished task without ID
+			await supertest(app)
+				.get('/tasks/deleteTask?user=first')
+				.expect(200, { message: 'Could not find that task. Double check your post number.' })
+		});
 	});
 
 	describe('/resetAll', () => {
