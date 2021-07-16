@@ -37,7 +37,7 @@ class Task extends Model {}
     {
       user: { type: Sequelize.DataTypes.STRING, ...requiredOptions.user },
       task: { type: Sequelize.DataTypes.STRING, ...requiredOptions.task },
-      finished: { type: Sequelize.DataTypes.BOOLEAN },
+      finished: { type: Sequelize.DataTypes.BOOLEAN, defaultValue: false },
     },
     { sequelize },
   );
