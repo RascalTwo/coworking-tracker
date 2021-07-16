@@ -59,7 +59,7 @@ module.exports = {
   deleteTask: async (req, res) => {
     let task;
     const failures = ['undefined', false];
-    if (failures.some((val) => val == req.query.id))
+    if (!req.query.id || failures.some((val) => val == req.query.id))
       task = await Task.findOne({
         where: {
           [Op.and]: [{ user: req.query.user }, { finished: false }],

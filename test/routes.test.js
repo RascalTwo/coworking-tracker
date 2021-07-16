@@ -231,7 +231,7 @@ describe('API_KEY', () => {
 			.expect(NOT_AUTH_RESPONSE);
 		delete process.env.API_KEY;
 	});
-	it('must match exactly when defined', async () => {
+	it('must match as prefix when defined', async () => {
 		process.env.API_KEY = 'my super key';
 		// completly wrong
 		await supertest(app)
@@ -241,10 +241,11 @@ describe('API_KEY', () => {
 		await supertest(app)
 			.get('/tasks/createTask?key=my%20super%20key&user=user&task=task')
 			.expect(TASK_SUBMITTED_RESPONSE);
-		// too long
+		await Task.destroy({ truncate: true });
+		// too long - still matches as prefix is the correct key
 		await supertest(app)
 			.get('/tasks/createTask?key=my%20super%20keyextra&user=user&task=task')
-			.expect(NOT_AUTH_RESPONSE);
+			.expect(TASK_SUBMITTED_RESPONSE);
 		// too short
 		await supertest(app)
 			.get('/tasks/createTask?key=my%20super&user=user&task=task')

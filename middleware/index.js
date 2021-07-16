@@ -24,8 +24,8 @@ module.exports = {
     // }
 
     // original solution to timing attacks
-    const key = process.env.API_KEY;
-    const clientKey = Buffer.from(req.query.key.padEnd(key.length).slice(0, key.length));
+    const key = process.env.API_KEY || '';
+    const clientKey = Buffer.from((req.query.key || '').padEnd(key.length).slice(0, key.length));
     const apiKey = Buffer.from(key);
     const isSame = crypto.timingSafeEqual(clientKey, apiKey);
 
