@@ -23,7 +23,7 @@ const testContent = process.env.ENV === 'dev' ? fs.readFileSync('./tests/index.j
 app
   .route('/')
   .get((req, res) =>
-    res.render('tasks', { testContent: ejs.render(testContent, { apiKey: process.env.API_KEY}) }),
+    res.render('tasks', { testContent: testContent ? ejs.render(testContent, { apiKey: process.env.API_KEY}) : null }),
   );
 
 const tasksRoute = require('./routes/tasks');
