@@ -83,7 +83,7 @@ describe('/tasks', () => {
           return;
         }
 
-        const tasks = JSON.parse(data);.filter(({ user }) => user.startsWith(helpers.usernamePrefix))
+        const tasks = JSON.parse(data).filter(({ user }) => user.startsWith(helpers.usernamePrefix))
 
 				assert.deepStrictEqual(tasks.length, 1);
 

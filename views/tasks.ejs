@@ -12,7 +12,7 @@
     <ul id="taskList"></ul>
     <script src="main.js"></script>
     <% if(testContent){ %>
-    <div id="mocha"></div>
+    <div id="mocha" style="position: absolute; top: 0; right: 0; background-color: hsl(0, 0%, 75%); padding: 1em; border-radius: 1em;"></div>
     <link rel="stylesheet" href="https://unpkg.com/mocha/mocha.css" />
     <script src="https://unpkg.com/chai/chai.js"></script>
     <script src="https://unpkg.com/mocha/mocha.js"></script>
@@ -20,7 +20,9 @@
     <script class="mocha-init">
       mocha.setup({
         ui: 'bdd',
-        bail: true
+        bail: true,
+        retries: 1,
+        noHighlighting: true
       });
     </script>
     <script>
