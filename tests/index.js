@@ -29,6 +29,12 @@ const CURRENT_TASKS = (() => {
 
 const helpers = {
   apiKey: '<%= apiKey %>',
+  usernamePrefix: Date.now().toString(),
+  username(user){
+    if (!user) return user;
+    if (user.toLowerCase() === 'thedabolical') return user;
+    return this.usernamePrefix + user;
+  },
   async getFetch(url) {
     const response = await fetch(url);
     const data = await response.json();
@@ -37,60 +43,60 @@ const helpers = {
   },
   async addTask(user, task, apiKey) {
     return await this.getFetch(
-      `/tasks/createTask?user=${user}&task=${task}&key=${apiKey || this.apiKey}`,
+      `/tasks/createTask?user=${this.username(user)}&task=${task}&key=${apiKey || this.apiKey}`,
     );
   },
   async finishTask(user, apiKey) {
     return await this.getFetch(
-      `/tasks/finishTask?user=${user}&key=${apiKey || this.apiKey}`,
+      `/tasks/finishTask?user=${this.username(user)}&key=${apiKey || this.apiKey}`,
     );
   },
   async deleteTask(user, id, apiKey) {
     return await this.getFetch(
-      `/tasks/deleteTask?user=${user}&key=${apiKey || this.apiKey}&id=${id}`,
+      `/tasks/deleteTask?user=${this.username(user)}&key=${apiKey || this.apiKey}&id=${id}`,
     );
   },
   async resetAllTasks(user, apiKey) {
     return await this.getFetch(
-      `/tasks/resetAll?user=${user}&key=${apiKey || this.apiKey}`,
+      `/tasks/resetAll?user=${this.username(user)}&key=${apiKey || this.apiKey}`,
     )
   }
 }
 
-const resetDB = async () => {
-	await helpers.resetAllTasks('theDabolical').catch(() => undefined);
-}
-
-beforeEach(() => resetDB());
 
 describe('/tasks', () => {
   describe('/', () => {
 		it('opens SSE stream', (done) => {
 			const es = new EventSource('/tasks');
 			es.addEventListener('message', ({ data }) => {
-				assert.deepStrictEqual(JSON.parse(data), []);
+        JSON.parse(data);
 				es.close();
 				done();
 			});
 		});
 		it('is sent updates', (done) => {
 			const es = new EventSource('/tasks');
+      let first = true;
 			es.addEventListener('message', ({ data }) => {
-				const tasks = JSON.parse(data);
-				if (!tasks.length) return;
+				if (first) {
+          first = false;
+          return;
+        }
+
+        const tasks = JSON.parse(data);.filter(({ user }) => user.startsWith(helpers.usernamePrefix))
 
 				assert.deepStrictEqual(tasks.length, 1);
 
 				const task = tasks[0];
 
 				assert.deepStrictEqual(task.task, 'task text');
-				assert.deepStrictEqual(task.user, 'username');
+				assert.deepStrictEqual(task.user, helpers.username('first'));
 				assert.ok(!task.finished);
 
 				es.close();
 				done();
 			});
-      helpers.addTask('username', 'task text')
+      helpers.addTask('first', 'task text')
         .then(payload =>
           assert.deepStrictEqual(payload, TASK_SUBMITTED_RESPONSE)
         )
@@ -100,16 +106,16 @@ describe('/tasks', () => {
 
 	describe('/createTask', () => {
 		it('creates new task', () =>
-      helpers.addTask('username', 'task text')
+      helpers.addTask('second', 'task text')
         .then(payload => assert.deepStrictEqual(payload, TASK_SUBMITTED_RESPONSE))
 		);
 		it('prevents creation of additional task', async () => {
-			await helpers.addTask('username', 'task text');
-			return helpers.addTask('username', 'another one')
+			await helpers.addTask('third', 'task text');
+			return helpers.addTask('third', 'another one')
         .then(payload => assert.deepStrictEqual(payload,  { message: 'You must finish your open task first' }))
 		});
 		it('requires fields', async () => {
-      await helpers.addTask('username', '')
+      await helpers.addTask('fourth', '')
         .then(payload =>
           assert.deepStrictEqual(payload, {
             message: 'Submission was invalid.',
@@ -143,57 +149,57 @@ describe('/tasks', () => {
 
 	describe('/finishTask', () => {
 		it('requires existing task', () =>
-      helpers.finishTask('username')
+      helpers.finishTask('fifth')
         .then(payload => assert.deepStrictEqual(payload, { message: 'You have no open tasks' }))
 		);
 		it('finishes task', async () => {
-      await helpers.addTask('username', 'task text');
-			await helpers.finishTask('username')
+      await helpers.addTask('sixth', 'task text');
+			await helpers.finishTask('sixth')
         .then(payload => assert.deepStrictEqual(payload, { message: 'Nailed it! Look at you go!' }))
 		});
 	});
 
 	describe('/deleteTask', () => {
 		it('handles invalid task ID', () =>
-			helpers.deleteTask('username', '0')
+			helpers.deleteTask('seventh', '0')
 				.then(payload => assert.deepStrictEqual(payload, TASK_NOT_FOUND_RESPONSE))
 		);
 		it('deletes task', async () => {
-      await helpers.addTask('username', 'task text');
-			await helpers.deleteTask('username', '1')
+      await helpers.addTask('eighth', 'task text');
+			await helpers.deleteTask('eighth', CURRENT_TASKS.slice(-1)[0].id)
 				.then(payload => assert.deepStrictEqual(payload, TASK_REMOVED_RESPONSE))
 		});
 		it('can not delete others tasks', async () => {
-      await helpers.addTask('username', 'task text');
-      await helpers.deleteTask('other', '1')
+      await helpers.addTask('ninth', 'task text');
+      await helpers.deleteTask('ninth.5', CURRENT_TASKS.slice(-1)[0].id)
         .then(payload => assert.deepStrictEqual(payload, { message: 'Unauthorized. You can only delete your own tasks.' }))
 		});
 		it('admins can delete any task', async () => {
-        await helpers.addTask('username', 'task text');
-        await helpers.deleteTask('thedabolical', '1')
+        await helpers.addTask('tenth', 'task text');
+        await helpers.deleteTask('thedabolical', CURRENT_TASKS.slice(-1)[0].id)
           .then(payload => assert.deepStrictEqual(payload, TASK_REMOVED_RESPONSE))
 		});
 
 		it('deletes last unfinished task when not provided ID', async () => {
-      await helpers.addTask('username', 'task text');
-      await helpers.finishTask('username')
+      await helpers.addTask('eleventh', 'task text');
+      await helpers.finishTask('eleventh')
 
-      await helpers.addTask('username', 'task text');
-      await helpers.deleteTask('username')
+      await helpers.addTask('eleventh', 'task text');
+      await helpers.deleteTask('eleventh')
         .then(payload => assert.deepStrictEqual(payload, TASK_REMOVED_RESPONSE))
 
-      await helpers.deleteTask('username')
+      await helpers.deleteTask('eleventh')
         .then(payload => assert.deepStrictEqual(payload, TASK_NOT_FOUND_RESPONSE))
 		});
 	});
 
 	describe('/resetAll', () => {
 		it('not usable by other users', () =>
-      helpers.resetAllTasks('username')
+      helpers.resetAllTasks('twelfth')
         .then(payload => assert.deepStrictEqual(payload, { message: 'Only the stream owner can delete all tasks.' }))
 		);
 		it('works', async () => {
-      await helpers.addTask('username', 'task text')
+      await helpers.addTask('thirteenth', 'task text')
 			await helpers.resetAllTasks('theDabolical')
         .then(payload => assert.deepStrictEqual(payload, { message: 'All tasks reset.' }))
       assert.deepStrictEqual(CURRENT_TASKS, []);
@@ -206,11 +212,11 @@ describe('API KEY', () => {
     return it.skip('unable to test wihout API_KEY being set')
   }
   it('blocks invalid prefix', async () => {
-    await helpers.addTask('username', 'task text', 'wrong key')
+    await helpers.addTask('fourteenth', 'task text', 'wrong key')
       .then(payload => assert.deepStrictEqual(payload, NOT_AUTH_RESPONSE));
   });
   it('accept correct prefix', async () => {
-    await helpers.addTask('username', 'task text', helpers.apiKey + 'random text after')
+    await helpers.addTask('fifteenth', 'task text', helpers.apiKey + 'random text after')
       .then(payload => assert.deepStrictEqual(payload, TASK_SUBMITTED_RESPONSE));
   });
 });

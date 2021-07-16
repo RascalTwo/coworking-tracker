@@ -18,7 +18,10 @@
     <script src="https://unpkg.com/mocha/mocha.js"></script>
 
     <script class="mocha-init">
-      mocha.setup('bdd');
+      mocha.setup({
+        ui: 'bdd',
+        bail: true
+      });
     </script>
     <script>
       <%- testContent %>
