@@ -1,7 +1,9 @@
 require('dotenv').config();
+const fs = require('fs');
 const express = require('express');
 const logger = require('morgan');
 const cors = require('cors');
+const ejs = require('ejs');
 const port = process.env.PORT || 3000;
 
 const app = express();
@@ -17,10 +19,11 @@ app.set('view engine', 'ejs');
 
 app.use(express.static('public'));
 
+const testContent = process.env.ENV === 'dev' ? fs.readFileSync('./tests/index.js').toString() : null
 app
   .route('/')
   .get((req, res) =>
-    res.render('tasks', { apiKey: process.env.API_KEY, test: process.env.ENV === 'dev' }),
+    res.render('tasks', { testContent: ejs.render(testContent, { apiKey: process.env.API_KEY}) }),
   );
 
 const tasksRoute = require('./routes/tasks');
