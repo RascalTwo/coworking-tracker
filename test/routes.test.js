@@ -7,6 +7,8 @@ const EventSource = require('eventsource')
 
 const NOT_AUTH_RESPONSE = { message: 'You are not authorized to use this api.' };
 const TASK_SUBMITTED_RESPONSE = { message: 'Your task is submitted! Get to work!' };
+const TASK_NOT_FOUND_RESPONSE = { message: 'Could not find that task. Double check your post number.' };
+const TASK_REMOVED_RESPONSE = { message: 'Your task has been removed' };
 
 let app = null;
 let Task = null;
@@ -129,7 +131,7 @@ describe('/tasks', () => {
 		it('handles invalid task ID', () =>
 			supertest(app)
 				.get('/tasks/deleteTask?user=username&id=0')
-				.expect(200, { message: 'Could not find that task. Double check your post number.' })
+				.expect(200, TASK_NOT_FOUND_RESPONSE)
 		);
 		it('deletes task', async () => {
 			await supertest(app)
@@ -137,7 +139,7 @@ describe('/tasks', () => {
 			const task = await Task.findOne({ where: { task: 'deletion-text' }})
 			await supertest(app)
 				.get('/tasks/deleteTask?user=username&id=' + task.id)
-				.expect(201, { message: 'Your task has been removed' })
+				.expect(201, TASK_REMOVED_RESPONSE)
 		});
 		it('can not delete others tasks', async () => {
 			await supertest(app)
@@ -153,7 +155,7 @@ describe('/tasks', () => {
 			const task = await Task.findOne({ where: { task: 'deletion-text' }})
 			await supertest(app)
 				.get('/tasks/deleteTask?user=thedabolical&id=' + task.id)
-				.expect(201, { message: 'Your task has been removed' })
+				.expect(201, TASK_REMOVED_RESPONSE)
 		});
 
 		it('deletes last unfinished task when not provided ID', async () => {
@@ -168,12 +170,12 @@ describe('/tasks', () => {
 				.get('/tasks/createTask?user=first&task=delete-without-id')
 			await supertest(app)
 				.get('/tasks/deleteTask?user=first')
-				.expect(201, { message: 'Your task has been removed' })
+				.expect(201, TASK_REMOVED_RESPONSE)
 
 			// Try and delete already finished task without ID
 			await supertest(app)
 				.get('/tasks/deleteTask?user=first')
-				.expect(200, { message: 'Could not find that task. Double check your post number.' })
+				.expect(200, TASK_NOT_FOUND_RESPONSE)
 		});
 	});
 
@@ -190,22 +192,6 @@ describe('/tasks', () => {
 				.get('/tasks/resetAll?user=theDabolical')
 				.expect(201, { message: 'All tasks reset.' })
 			assert.deepStrictEqual(await Task.findAll({}), []);
-		});
-		it('can not delete others tasks', async () => {
-			await supertest(app)
-				.get('/tasks/createTask?user=first&task=deletion-text')
-			const task = await Task.findOne({ where: { task: 'deletion-text' }})
-			await supertest(app)
-				.get('/tasks/deleteTask?user=second&id=' + task.id)
-				.expect(200, { message: 'Unauthorized. You can only delete your own tasks.' })
-		});
-		it('admins can delete any task', async () => {
-			await supertest(app)
-				.get('/tasks/createTask?user=first&task=deletion-text')
-			const task = await Task.findOne({ where: { task: 'deletion-text' }})
-			await supertest(app)
-				.get('/tasks/deleteTask?user=thedabolical&id=' + task.id)
-				.expect(201, { message: 'Your task has been removed' })
 		});
 	});
 });
